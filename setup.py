@@ -5,6 +5,8 @@ from setuptools import setup
 VERSION = '0.0.1'
 NAME = 'goodscloud_api_client'
 
+tests_require = ['nose', 'coverage', 'responses']
+
 setup(
     name = NAME,
     version = VERSION,
@@ -20,9 +22,11 @@ setup(
     entry_points = {
         'console_scripts': [
             'goodscloud_api_client=%s.client:main' % (NAME,),
+            'test_%s=%s.test.run:run' % (NAME, NAME,),
         ],
     },
     install_requires = [
         'requests',
-    ]
+    ] + tests_require,
+    tests_require = tests_require,
 )

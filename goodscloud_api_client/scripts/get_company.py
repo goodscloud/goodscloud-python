@@ -9,7 +9,7 @@ def get_company():
         user=sys.argv[2],
         pwd=sys.argv[3],
     )
-    response = gc.get("internal/company")
+    response = gc.get("/api/internal/company")
     resp_json = response.json()
     print resp_json
 

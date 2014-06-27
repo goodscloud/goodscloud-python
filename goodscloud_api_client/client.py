@@ -2,7 +2,7 @@
 Usage:
 
 # Instantiate with API host, username, and password:
->>> gc = GoodsCloudAPIClient(host="http://app.goodscloud.com", user="test@example.com", pwd="testpass")
+>>> gc = GoodsCloudAPIClient(host="http://app.goodscloud.com", user="test@test.com", pwd="mypass")
 
 # Then, do requests as follows:
 >>> orders = gc.get(
@@ -47,10 +47,11 @@ def request_wrapper(fn):
     * print response status code and reason
 
     """
-    def wrap_request(self, url, *args, **kwargs):
-        assert url.startswith(("internal", "external"))
-        url = '/api/' + url
-        resp = fn(self, url, *args, **kwargs)
+    def wrap_request(self, path, *args, **kwargs):
+        assert path.startswith(("/api/internal", "/api/external")), (
+            "The provided URL path must start with `/api/internal` or `/api/external`."
+        )
+        resp = fn(self, path, *args, **kwargs)
         print resp.status_code, resp.reason
         return resp
     return wrap_request

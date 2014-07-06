@@ -200,25 +200,25 @@ def debug_trace(frame, event, arg):
         return debug_trace
 
     if fnname is 'create_query_params' and event == 'return':
-        print "\n--- Query args:\n{}".format(arg)
+        print("\n--- Query args:\n{}".format(arg))
 
     elif fnname is '_create_sign_str' and event == 'call':
-        print "\n--- App secret:\n{}".format(
-            frame.f_locals['self'].auth['app_secret'])
-        print "\n--- Signature string input parameters: "
+        print("\n--- App secret:\n{}".format(
+            frame.f_locals['self'].auth['app_secret']))
+        print("\n--- Signature string input parameters: ")
         for (arg, val) in frame.f_locals.items():
             if arg == 'self': continue
-            print "{}: {}".format(arg, val)
+            print("{}: {}".format(arg, val))
 
     elif fnname is "_sign" and event == 'call':
-        print "\n--- Composed string to-be-signed:\n{}".format(
-            repr(frame.f_locals['string']))
+        print("\n--- Composed string to-be-signed:\n{}".format(
+            repr(frame.f_locals['string'])))
 
     elif fnname is "_sign" and event == 'return':
-        print "\n--- Resulting signature:\n{}".format(arg)
+        print("\n--- Resulting signature:\n{}".format(arg))
 
     elif fnname is '_create_signed_url' and event == 'return':
         url = frame.f_locals['url']
-        print "\n--- Resulting URL:\n{}".format(url)
-        print "\n--- Unquoted URL:\n{}".format(urllib.unquote_plus(url))
+        print("\n--- Resulting URL:\n{}".format(url))
+        print("\n--- Unquoted URL:\n{}".format(urllib.unquote_plus(url)))
     return debug_trace

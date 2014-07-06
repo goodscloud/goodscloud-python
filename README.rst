@@ -18,7 +18,7 @@ Interactive Usage
 
 A Python REPL starts up:
 
-.. code-block:: pycon
+.. code-block:: python
 
     # Instantiate with API host, username, and password:
     >>> gc = GoodsCloudAPIClient(host="http://app.goodscloud.com", user="test@example.com", pwd="testpass")

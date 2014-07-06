@@ -35,8 +35,9 @@ import urllib
 
 import requests
 
-logger = logging.getLogger('requests.packages.urllib3.connectionpool')
-logger.setLevel('WARN')
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.INFO)
 
 
 def request_wrapper(fn):
@@ -52,7 +53,7 @@ def request_wrapper(fn):
             "The provided URL path must start with `/api/internal` or `/api/external`."
         )
         resp = fn(self, path, *args, **kwargs)
-        print resp.status_code, resp.reason
+        logger.info('{} {}'.format(resp.status_code, resp.reason))
         return resp
     return wrap_request
 
@@ -78,8 +79,8 @@ class GoodsCloudAPIClient(object):
         try:
             session = resp.json()
         except ValueError as exc:
-            print resp.request.url
-            print resp.text
+            logger.critical(resp.request.url)
+            logger.critical(resp.text)
             raise exc
         assert session['email'] == email, "Login failed on {}".format(
             self.host)

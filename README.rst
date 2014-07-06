@@ -46,7 +46,15 @@ To run a script:
 
     $ python <path/to/your/script.py> # your command line arguments go here
 
+Viewing logger output
+---------------------
 
+To view logger output on ``STDOUT``, do this:
+
+.. code-block:: python
+
+    >>> import logging
+    >>> logging.getLogger('goodscloud_api_client').addHandler(logging.StreamHandler())
 
 
 Debugging authentication issues

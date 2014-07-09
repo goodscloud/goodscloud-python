@@ -20,11 +20,8 @@ Usage:
 # authentication and request composition issues with partners.
 """
 
-from base64 import encodestring, b64encode
-import ConfigParser
-import getpass
+from base64 import b64encode
 from hashlib import sha1
-import inspect
 import hmac
 import json
 import logging
@@ -75,7 +72,8 @@ class GoodsCloudAPIClient(object):
         resp = requests.post(
             self.host + '/session',
             headers=headers,
-            verify=False)
+            verify=False,
+        )
         try:
             session = resp.json()
         except ValueError as exc:
@@ -86,7 +84,7 @@ class GoodsCloudAPIClient(object):
             self.host)
         return session
 
-    def _create_sign_str(self, path, method, params, expires, post_data):
+    def _create_sign_str(self, path, method, params, expires, body_data):
         """Returns the input string to be hashed."""
         # Parameters are sorted, but not urlencoded, for md5 digest.
         str_params = '&'.join("%s=%s" % (a, b) for a, b in sorted(params))
@@ -94,9 +92,9 @@ class GoodsCloudAPIClient(object):
             method,
             path,
             md5.new(str_params).hexdigest(),
-            md5.new(post_data or '').hexdigest(),
+            md5.new(body_data or '').hexdigest(),
             self.auth['app_token'],
-            expires
+            expires,
         ])
         return sign_str
 
@@ -106,11 +104,11 @@ class GoodsCloudAPIClient(object):
             hmac.new(
                 str(self.auth['app_secret']),
                 string.encode('utf-8'),
-                sha1
+                sha1,
             ).digest()
         ).rstrip('=')
 
-    def _create_signed_url(self, path, method, param_dict=None, post_data=None):
+    def _create_signed_url(self, path, method, param_dict=None, body_data=None):
         """Produces signed URL."""
         expires = time.strftime('%Y-%m-%dT%H:%M:%SZ',
                                 time.gmtime(time.time() + EXPIRES))
@@ -120,23 +118,33 @@ class GoodsCloudAPIClient(object):
         param_dict['expires'] = expires
         params = sorted([(a, b) for a, b in param_dict.items()])
         sign_str = self._create_sign_str(
-            path, method, params, expires, post_data)
+            path, method, params, expires, body_data,
+        )
         sign = self._sign(sign_str)
         params += [('sign', sign)]
         url = self.host + path + '?' + urllib.urlencode(params)
         return url
 
-    def _post_patch_put(self, method, url, obj_dict):
+    def jsonify_params(self, kwargs):
+        """JSON-ifies all keyword arguments of type dict."""
+        return {
+            key: json.dumps(value) if type(value) == dict else value
+            for (key, value) in kwargs.items()
+        }
+
+    def _post_patch_put(self, method, url, obj_dict, **kwargs):
         """Common steps for all methods which create or edit objects."""
         # Convert provided Python dictionary object into JSON
-        post_data = json.dumps(obj_dict)
+        body_data = json.dumps(obj_dict)
         signed_url = self._create_signed_url(
             url,
             method.upper(),
-            post_data=post_data)
+            self.jsonify_params(kwargs),
+            body_data=body_data,
+        )
         return getattr(requests, method)(
             signed_url,
-            data=post_data,
+            data=body_data,
             headers={"Content-Type": "application/json"},
         )
 
@@ -148,12 +156,7 @@ class GoodsCloudAPIClient(object):
             assert type(kwargs['q']['filters']) == list, (
                 "Filters must be a list of dicts, wrapped within query parameter `q`."
             )
-        # JSONifies all keyword arguments of type dict.
-        param_dict = {
-            key: json.dumps(value) if type(value) == dict else value
-            for (key, value) in kwargs.items()
-        }
-        signed_url = self._create_signed_url(url, 'GET', param_dict)
+        signed_url = self._create_signed_url(url, 'GET', self.jsonify_params(kwargs))
         return requests.get(signed_url)
 
     @request_wrapper
@@ -162,16 +165,16 @@ class GoodsCloudAPIClient(object):
         return requests.delete(signed_url)
 
     @request_wrapper
-    def post(self, url, obj_dict):
-        return self._post_patch_put('post', url, obj_dict)
+    def post(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('post', url, obj_dict, **kwargs)
 
     @request_wrapper
-    def put(self, url, obj_dict):
-        return self._post_patch_put('put', url, obj_dict)
+    def put(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('put', url, obj_dict, **kwargs)
 
     @request_wrapper
-    def patch(self, url, obj_dict):
-        return self._post_patch_put('patch', url, obj_dict)
+    def patch(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('patch', url, obj_dict, **kwargs)
 
 
 def main():

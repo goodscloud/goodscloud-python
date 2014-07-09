@@ -86,7 +86,7 @@ class GoodsCloudAPIClient(object):
             self.host)
         return session
 
-    def _create_sign_str(self, path, method, params, expires, post_data):
+    def _create_sign_str(self, path, method, params, expires, body_data):
         """Returns the input string to be hashed."""
         # Parameters are sorted, but not urlencoded, for md5 digest.
         str_params = '&'.join("%s=%s" % (a, b) for a, b in sorted(params))
@@ -94,7 +94,7 @@ class GoodsCloudAPIClient(object):
             method,
             path,
             md5.new(str_params).hexdigest(),
-            md5.new(post_data or '').hexdigest(),
+            md5.new(body_data or '').hexdigest(),
             self.auth['app_token'],
             expires
         ])
@@ -110,7 +110,7 @@ class GoodsCloudAPIClient(object):
             ).digest()
         ).rstrip('=')
 
-    def _create_signed_url(self, path, method, param_dict=None, post_data=None):
+    def _create_signed_url(self, path, method, param_dict=None, body_data=None):
         """Produces signed URL."""
         expires = time.strftime('%Y-%m-%dT%H:%M:%SZ',
                                 time.gmtime(time.time() + EXPIRES))
@@ -120,7 +120,7 @@ class GoodsCloudAPIClient(object):
         param_dict['expires'] = expires
         params = sorted([(a, b) for a, b in param_dict.items()])
         sign_str = self._create_sign_str(
-            path, method, params, expires, post_data)
+            path, method, params, expires, body_data)
         sign = self._sign(sign_str)
         params += [('sign', sign)]
         url = self.host + path + '?' + urllib.urlencode(params)
@@ -136,15 +136,15 @@ class GoodsCloudAPIClient(object):
     def _post_patch_put(self, method, url, obj_dict, **kwargs):
         """Common steps for all methods which create or edit objects."""
         # Convert provided Python dictionary object into JSON
-        post_data = json.dumps(obj_dict)
+        body_data = json.dumps(obj_dict)
         signed_url = self._create_signed_url(
             url,
             method.upper(),
             self.jsonify_params(kwargs),
-            post_data=post_data)
+            body_data=body_data)
         return getattr(requests, method)(
             signed_url,
-            data=post_data,
+            data=body_data,
             headers={"Content-Type": "application/json"},
         )
 

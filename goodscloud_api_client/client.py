@@ -75,7 +75,8 @@ class GoodsCloudAPIClient(object):
         resp = requests.post(
             self.host + '/session',
             headers=headers,
-            verify=False)
+            verify=False,
+        )
         try:
             session = resp.json()
         except ValueError as exc:
@@ -96,7 +97,7 @@ class GoodsCloudAPIClient(object):
             md5.new(str_params).hexdigest(),
             md5.new(body_data or '').hexdigest(),
             self.auth['app_token'],
-            expires
+            expires,
         ])
         return sign_str
 
@@ -106,7 +107,7 @@ class GoodsCloudAPIClient(object):
             hmac.new(
                 str(self.auth['app_secret']),
                 string.encode('utf-8'),
-                sha1
+                sha1,
             ).digest()
         ).rstrip('=')
 
@@ -120,7 +121,8 @@ class GoodsCloudAPIClient(object):
         param_dict['expires'] = expires
         params = sorted([(a, b) for a, b in param_dict.items()])
         sign_str = self._create_sign_str(
-            path, method, params, expires, body_data)
+            path, method, params, expires, body_data,
+        )
         sign = self._sign(sign_str)
         params += [('sign', sign)]
         url = self.host + path + '?' + urllib.urlencode(params)
@@ -141,7 +143,8 @@ class GoodsCloudAPIClient(object):
             url,
             method.upper(),
             self.jsonify_params(kwargs),
-            body_data=body_data)
+            body_data=body_data,
+        )
         return getattr(requests, method)(
             signed_url,
             data=body_data,

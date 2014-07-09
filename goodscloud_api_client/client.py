@@ -126,13 +126,21 @@ class GoodsCloudAPIClient(object):
         url = self.host + path + '?' + urllib.urlencode(params)
         return url
 
-    def _post_patch_put(self, method, url, obj_dict):
+    def jsonify_params(self, kwargs):
+        """JSON-ifies all keyword arguments of type dict."""
+        return {
+            key: json.dumps(value) if type(value) == dict else value
+            for (key, value) in kwargs.items()
+        }
+
+    def _post_patch_put(self, method, url, obj_dict, **kwargs):
         """Common steps for all methods which create or edit objects."""
         # Convert provided Python dictionary object into JSON
         post_data = json.dumps(obj_dict)
         signed_url = self._create_signed_url(
             url,
             method.upper(),
+            self.jsonify_params(kwargs),
             post_data=post_data)
         return getattr(requests, method)(
             signed_url,
@@ -148,12 +156,7 @@ class GoodsCloudAPIClient(object):
             assert type(kwargs['q']['filters']) == list, (
                 "Filters must be a list of dicts, wrapped within query parameter `q`."
             )
-        # JSONifies all keyword arguments of type dict.
-        param_dict = {
-            key: json.dumps(value) if type(value) == dict else value
-            for (key, value) in kwargs.items()
-        }
-        signed_url = self._create_signed_url(url, 'GET', param_dict)
+        signed_url = self._create_signed_url(url, 'GET', self.jsonify_params(kwargs))
         return requests.get(signed_url)
 
     @request_wrapper
@@ -162,16 +165,16 @@ class GoodsCloudAPIClient(object):
         return requests.delete(signed_url)
 
     @request_wrapper
-    def post(self, url, obj_dict):
-        return self._post_patch_put('post', url, obj_dict)
+    def post(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('post', url, obj_dict, **kwargs)
 
     @request_wrapper
-    def put(self, url, obj_dict):
-        return self._post_patch_put('put', url, obj_dict)
+    def put(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('put', url, obj_dict, **kwargs)
 
     @request_wrapper
-    def patch(self, url, obj_dict):
-        return self._post_patch_put('patch', url, obj_dict)
+    def patch(self, url, obj_dict, **kwargs):
+        return self._post_patch_put('patch', url, obj_dict, **kwargs)
 
 
 def main():

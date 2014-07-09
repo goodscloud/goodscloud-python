@@ -20,11 +20,8 @@ Usage:
 # authentication and request composition issues with partners.
 """
 
-from base64 import encodestring, b64encode
-import ConfigParser
-import getpass
+from base64 import b64encode
 from hashlib import sha1
-import inspect
 import hmac
 import json
 import logging

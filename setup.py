@@ -2,7 +2,7 @@ from setuptools import setup
 
 # flake8: noqa
 
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 NAME = 'goodscloud_api_client'
 
 tests_require = ['nose', 'coverage', 'responses']

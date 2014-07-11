@@ -29,6 +29,7 @@ import md5
 import sys
 import time
 import urllib
+from functools import wraps
 
 import requests
 
@@ -45,6 +46,7 @@ def request_wrapper(fn):
     * print response status code and reason
 
     """
+    @wraps(fn)
     def wrap_request(self, path, *args, **kwargs):
         assert path.startswith(("/api/internal", "/api/external")), (
             "The provided URL path must start with `/api/internal` or `/api/external`."

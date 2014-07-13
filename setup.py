@@ -12,13 +12,15 @@ setup(
     version = VERSION,
     description = "GoodsCloud API client",
     long_description = "",
-    author = "GoodsCloud GmbH",
+    author = "GoodsCloud Inc.",
     author_email = 'dev@goodscloud.net',
     url = 'https://github.com/goodscloud/goodscloud',
+    data_files = [("", ["LICENSE"])],
+    license = 'BSD',
+    classifiers=['License :: OSI Approved :: BSD License',],
     zip_safe = True,
     packages = [NAME,],
-    package_data = {NAME: [],
-        },
+    package_data = {NAME: [],},
     entry_points = {
         'console_scripts': [
             'goodscloud_api_client=%s.client:main' % (NAME,),

@@ -21,15 +21,17 @@ Usage:
 """
 
 from base64 import b64encode
-from hashlib import sha1
+from hashlib import sha1, md5
 import hmac
 import json
 import logging
-import md5
 import sys
 import time
-import urllib
 from functools import wraps
+try:
+    from urllib import urlencode, unquote_plus
+except ImportError:
+    from urllib.parse import urlencode, unquote_plus
 
 import requests
 
@@ -93,8 +95,8 @@ class GoodsCloudAPIClient(object):
         sign_str = '\n'.join([
             method,
             path,
-            md5.new(str_params).hexdigest(),
-            md5.new(body_data or '').hexdigest(),
+            md5(str_params.encode('utf-8')).hexdigest(),
+            md5(body_data or b'').hexdigest(),
             self.auth['app_token'],
             expires,
         ])
@@ -104,11 +106,11 @@ class GoodsCloudAPIClient(object):
         """Calculates, then Base64-encodes HMAC for provided string."""
         return b64encode(
             hmac.new(
-                str(self.auth['app_secret']),
+                self.auth['app_secret'].encode('utf-8'),
                 string.encode('utf-8'),
                 sha1,
             ).digest()
-        ).rstrip('=')
+        ).rstrip(b'=')
 
     def _create_signed_url(self, path, method, param_dict=None, body_data=None):
         """Produces signed URL."""
@@ -124,7 +126,7 @@ class GoodsCloudAPIClient(object):
         )
         sign = self._sign(sign_str)
         params += [('sign', sign)]
-        url = self.host + path + '?' + urllib.urlencode(params)
+        url = self.host + path + '?' + urlencode(params)
         return url
 
     def jsonify_params(self, kwargs):
@@ -225,5 +227,5 @@ def debug_trace(frame, event, arg):
     elif fnname is '_create_signed_url' and event == 'return':
         url = frame.f_locals['url']
         print("\n--- Resulting URL:\n{}".format(url))
-        print("\n--- Unquoted URL:\n{}".format(urllib.unquote_plus(url)))
+        print("\n--- Unquoted URL:\n{}".format(unquote_plus(url)))
     return debug_trace

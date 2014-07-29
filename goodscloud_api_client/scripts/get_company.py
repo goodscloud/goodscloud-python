@@ -11,7 +11,7 @@ def get_company():
     )
     response = gc.get("/api/internal/company")
     resp_json = response.json()
-    print resp_json
+    print(resp_json)
 
 
 if __name__ == '__main__':

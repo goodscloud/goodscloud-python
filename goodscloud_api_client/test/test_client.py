@@ -24,7 +24,7 @@ class APIClientTest(unittest.TestCase):
                           content_type='application/json')
         with self.assertRaises(AssertionError) as context:
             GoodsCloudAPIClient('http://localhost:5000', 'user@example.com', 'wrongpassword')
-        self.assertEqual(context.exception.message, 'Login failed on http://localhost:5000')
+        self.assertEqual(context.exception.args[0], 'Login failed on http://localhost:5000')
 
 class AuthenticatedAPIClientTest(unittest.TestCase):
     @responses.activate
@@ -56,7 +56,7 @@ class AuthenticatedAPIClientTest(unittest.TestCase):
             content_type='application/json',
         )
         res = self.api.get('/api/internal/channel_product')
-        self.assertEquals(
+        self.assertEqual(
             responses.calls[0].request.url,
             'http://localhost:5000/api/internal/channel_product?expires=2014-06-26T08%3A32%3A25Z&key=APPKEY&token=APPTOKEN&sign=gLC2KB8crSqbbiqFQwooCO5m4kU'
         )
@@ -70,7 +70,7 @@ class AuthenticatedAPIClientTest(unittest.TestCase):
             content_type='application/json',
         )
         res = self.api.get('/api/internal/channel_product', q=dict(filters=[dict(channel_id=5)]))
-        self.assertEquals(
+        self.assertEqual(
             responses.calls[0].request.url,
             'http://localhost:5000/api/internal/channel_product?expires=2014-06-26T08%3A32%3A25Z&key=APPKEY&q=%7B%22filters%22%3A+%5B%7B%22channel_id%22%3A+5%7D%5D%7D&token=APPTOKEN&sign=pwA4WnxhZ%2B268VlBI%2FQcQdO%2Fp%2FA'
         )

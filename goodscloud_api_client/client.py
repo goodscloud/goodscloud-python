@@ -61,12 +61,13 @@ def request_wrapper(fn):
 
 class GoodsCloudAPIClient(object):
 
-    def __init__(self, host, user, pwd, debug=False, aws_credentials=False):
+    def __init__(self, host, user, pwd, version='current', debug=False, aws_credentials=False):
         self.host = host # Example: `https://app.goodscloud.com`
         self.user = user
         self.pwd = pwd
         self.session = self.login(self.user, self.pwd, aws_credentials)
         self.auth = self.session['auth']
+        self.headers = {'Accept': 'application/json; version=%s' % (version,)}
         self.debug = debug
         if self.debug is True:
             sys.settrace(debug_trace)
@@ -146,10 +147,12 @@ class GoodsCloudAPIClient(object):
             self.jsonify_params(kwargs),
             body_data=body_data,
         )
+        headers = {"Content-Type": "application/json"}
+        headers.update(self.headers)
         return getattr(requests, method)(
             signed_url,
             data=body_data,
-            headers={"Content-Type": "application/json"},
+            headers=headers,
         )
 
     @request_wrapper
@@ -161,12 +164,12 @@ class GoodsCloudAPIClient(object):
                 "Filters must be a list of dicts, wrapped within query parameter `q`."
             )
         signed_url = self._create_signed_url(url, 'GET', self.jsonify_params(kwargs))
-        return requests.get(signed_url)
+        return requests.get(signed_url, headers=self.headers)
 
     @request_wrapper
     def delete(self, url):
         signed_url = self._create_signed_url(url, 'DELETE')
-        return requests.delete(signed_url)
+        return requests.delete(signed_url, headers=self.headers)
 
     @request_wrapper
     def post(self, url, obj_dict, **kwargs):

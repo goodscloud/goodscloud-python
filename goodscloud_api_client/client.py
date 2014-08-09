@@ -61,18 +61,18 @@ def request_wrapper(fn):
 
 class GoodsCloudAPIClient(object):
 
-    def __init__(self, host, user, pwd, debug=False):
+    def __init__(self, host, user, pwd, debug=False, aws_credentials=False):
         self.host = host # Example: `https://app.goodscloud.com`
         self.user = user
         self.pwd = pwd
-        self.session = self.login(self.user, self.pwd)
+        self.session = self.login(self.user, self.pwd, aws_credentials)
         self.auth = self.session['auth']
         self.debug = debug
         if self.debug is True:
             sys.settrace(debug_trace)
 
-    def login(self, email, password):
-        headers = {"GC-Email": email, "GC-Password": password}
+    def login(self, email, password, aws_credentials):
+        headers = {"GC-Email": email, "GC-Password": password, "GC-AWS": aws_credentials}
         resp = requests.post(
             self.host + '/session',
             headers=headers,

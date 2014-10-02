@@ -1,6 +1,10 @@
 GoodsCloud API client in Python
 ===============================
 
+.. image:: https://travis-ci.org/goodscloud/goodscloud-python.svg?branch=master
+    :target: https://travis-ci.org/goodscloud/goodscloud-python
+    :alt: Travis
+
 Installation
 ------------
 

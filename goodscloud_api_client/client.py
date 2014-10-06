@@ -53,6 +53,8 @@ def request_wrapper(fn):
         assert path.startswith(("/api/internal", "/api/external")), (
             "The provided URL path must start with `/api/internal` or `/api/external`."
         )
+        if 'headers' in kwargs.keys():
+            self.headers.update(kwargs['headers'])
         resp = fn(self, path, *args, **kwargs)
         logger.info('{} {}'.format(resp.status_code, resp.reason))
         return resp

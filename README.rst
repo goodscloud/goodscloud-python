@@ -29,14 +29,14 @@ A Python REPL starts up:
 
     # Then, do requests as follows:
     >>> orders = gc.get(
-    >>>     "internal/order",
+    >>>     "/api/internal/order",
     >>>     q=dict(filters=[dict(name="channel_id", op="eq", val=16)]), results_per_page=20, page=1)
     200 OK
     >>> first_id = orders.json()['objects'][0]['id']
-    >>> gc.patch(url="internal/order/{}".format(first_id),
+    >>> gc.patch(url="/api/internal/order/{}".format(first_id),
     >>>     dict(pay_later=True)
     200 OK
-    >>> gc.delete(url="internal/order/{}".format(first_id))
+    >>> gc.delete(url="/api/internal/order/{}".format(first_id))
     204 NO CONTENT
 
 Writing and running scripts

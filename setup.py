@@ -29,6 +29,10 @@ setup(
     },
     install_requires = [
         'requests',
+        # required for SNI support:
+        'pyOpenSSL',
+        'ndg-httpsclient',
+        'pyasn1',
     ] + tests_require,
     test_suite = 'nose.collector',
     tests_require = tests_require,

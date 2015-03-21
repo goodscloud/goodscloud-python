@@ -59,23 +59,33 @@ def request_wrapper(fn):
     return wrap_request
 
 
+def jsonify_params(kwargs):
+    """JSON-ifies & url-encodes all keyword arguments of type dict."""
+    return urlencode({
+        key: json.dumps(value) if type(value) == dict else value
+        for (key, value) in kwargs.items()
+    })
+
+
 class GoodsCloudAPIClient(object):
 
     def __init__(self, host, user, pwd, version='current', debug=False, aws_credentials=False):
         self.host = host # Example: `https://app.goodscloud.com`
         self.user = user
         self.pwd = pwd
-        self.session = self.login(self.user, self.pwd, aws_credentials)
-        self.auth = self.session['auth']
-        self.headers = {'Accept': 'application/json; version=%s' % (version,)}
+        session = self.login(self.user, self.pwd, aws_credentials)
+        self.headers = {
+            'Accept': 'application/json; version=%s' % (version,),
+            'Authorization': session['access_token'],
+        }
         self.debug = debug
         if self.debug is True:
             sys.settrace(debug_trace)
 
     def login(self, email, password, aws_credentials):
-        headers = {"GC-Email": email, "GC-Password": password, "GC-AWS": aws_credentials}
+        headers = {"GC-Email": email, "GC-Password": password,}
         resp = requests.post(
-            self.host + '/session',
+            self.host + '/token',
             headers=headers,
             verify=False,
         )
@@ -85,86 +95,33 @@ class GoodsCloudAPIClient(object):
             logger.critical(resp.request.url)
             logger.critical(resp.text)
             raise exc
-        assert session['email'] == email, "Login failed on {}".format(
-            self.host)
+        assert 'error' not in session, session
         return session
 
-    def _create_sign_str(self, path, method, params, expires, body_data):
-        """Returns the input string to be hashed."""
-        # Parameters are sorted, but not urlencoded, for md5 digest.
-        str_params = '&'.join("%s=%s" % (a, b) for a, b in sorted(params))
-        sign_str = '\n'.join([
-            method,
-            path,
-            md5(str_params.encode('utf-8')).hexdigest(),
-            md5(body_data or b'').hexdigest(),
-            self.auth['app_token'],
-            expires,
-        ])
-        return sign_str
-
-    def _sign(self, string):
-        """Calculates, then Base64-encodes HMAC for provided string."""
-        return b64encode(
-            hmac.new(
-                self.auth['app_secret'].encode('utf-8'),
-                string.encode('utf-8'),
-                sha1,
-            ).digest()
-        ).rstrip(b'=')
-
-    def _create_signed_url(self, path, method, param_dict=None, body_data=None):
-        """Produces signed URL."""
-        expires = time.strftime('%Y-%m-%dT%H:%M:%SZ',
-                                time.gmtime(time.time() + EXPIRES))
-        if param_dict is None: param_dict = dict()
-        param_dict['key'] = self.auth['app_key']
-        param_dict['token'] = self.auth['app_token']
-        param_dict['expires'] = expires
-        params = sorted([(a, b) for a, b in param_dict.items()])
-        sign_str = self._create_sign_str(
-            path, method, params, expires, body_data,
-        )
-        sign = self._sign(sign_str)
-        params += [('sign', sign)]
-        url = self.host + path + '?' + urlencode(params)
-        return url
-
-    def jsonify_params(self, kwargs):
-        """JSON-ifies all keyword arguments of type dict."""
-        return {
-            key: json.dumps(value) if type(value) == dict else value
-            for (key, value) in kwargs.items()
-        }
 
     def _post_patch_put(self, method, url, obj_dict, **kwargs):
         """Common steps for all methods which create or edit objects."""
         # Convert provided Python dictionary object into JSON
         body_data = json.dumps(obj_dict)
-        signed_url = self._create_signed_url(
-            url,
-            method.upper(),
-            self.jsonify_params(kwargs),
-            body_data=body_data,
-        )
         headers = {"Content-Type": "application/json"}
         headers.update(self.headers)
+        url = "{}{}?{}".format(self.host, path, jsonify_params(kwargs))
         return getattr(requests, method)(
-            signed_url,
+            url,
             data=body_data,
             headers=headers,
         )
 
     @request_wrapper
-    def get(self, url, **kwargs):
+    def get(self, path, **kwargs):
         if ('q' in kwargs and kwargs['q'].get('filters', None)
             or 'filters' in kwargs
         ):
             assert type(kwargs['q']['filters']) == list, (
                 "Filters must be a list of dicts, wrapped within query parameter `q`."
             )
-        signed_url = self._create_signed_url(url, 'GET', self.jsonify_params(kwargs))
-        return requests.get(signed_url, headers=self.headers)
+        url = "{}{}?{}".format(self.host, path, jsonify_params(kwargs))
+        return requests.get(url, headers=self.headers)
 
     @request_wrapper
     def delete(self, url):

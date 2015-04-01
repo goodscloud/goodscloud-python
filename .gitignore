@@ -4,3 +4,4 @@ dist/
 *.egg/
 *.egg-info/
 .DS_STORE
+.idea/

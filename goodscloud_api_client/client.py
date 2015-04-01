@@ -20,13 +20,9 @@ Usage:
 # authentication and request composition issues with partners.
 """
 
-from base64 import b64encode
-from hashlib import sha1, md5
-import hmac
 import json
 import logging
 import sys
-import time
 from functools import wraps
 try:
     from urllib import urlencode, unquote_plus
@@ -82,7 +78,7 @@ class GoodsCloudAPIClient(object):
         if self.debug is True:
             sys.settrace(debug_trace)
 
-    def login(self, email, password, aws_credentials):
+    def login(self, email, password, aws_credentials=False):
         headers = {"GC-Email": email, "GC-Password": password,}
         resp = requests.post(
             self.host + '/token',
@@ -98,8 +94,7 @@ class GoodsCloudAPIClient(object):
         assert 'error' not in session, session
         return session
 
-
-    def _post_patch_put(self, method, url, obj_dict, **kwargs):
+    def _post_patch_put(self, method, path, obj_dict, **kwargs):
         """Common steps for all methods which create or edit objects."""
         # Convert provided Python dictionary object into JSON
         body_data = json.dumps(obj_dict)
@@ -125,8 +120,7 @@ class GoodsCloudAPIClient(object):
 
     @request_wrapper
     def delete(self, url):
-        signed_url = self._create_signed_url(url, 'DELETE')
-        return requests.delete(signed_url, headers=self.headers)
+        return requests.delete(url, headers=self.headers)
 
     @request_wrapper
     def post(self, url, obj_dict, **kwargs):

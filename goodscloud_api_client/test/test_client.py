@@ -1,8 +1,8 @@
 import time
 import unittest
-
 import responses
 from goodscloud_api_client.client import GoodsCloudAPIClient
+
 
 def mock_time():
     return 1403771045.000000
@@ -26,7 +26,9 @@ class APIClientTest(unittest.TestCase):
             GoodsCloudAPIClient('http://localhost:5000', 'user@example.com', 'wrongpassword')
         self.assertEqual(context.exception.args[0], 'Login failed on http://localhost:5000')
 
+
 class AuthenticatedAPIClientTest(unittest.TestCase):
+
     @responses.activate
     def setUp(self):
         responses.add(responses.POST, 'http://localhost:5000/session',
@@ -44,8 +46,6 @@ class AuthenticatedAPIClientTest(unittest.TestCase):
         )
         time.time = mock_time
         self.api = GoodsCloudAPIClient('http://localhost:5000', 'user@example.com', 'password')
-
-
 
     @responses.activate
     def test_get(self):
